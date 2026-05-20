@@ -1,123 +1,148 @@
 import streamlit as st
 
-# Configuración de la página web
-st.set_page_config(page_title="Calculadora Kivy-Style", page_icon="🧮", layout="centered")
+# 1. CONFIGURACIÓN DE LA PÁGINA
+st.set_page_config(
+    page_title="Calculadora Modo Claro", 
+    page_icon="🧮", 
+    layout="centered"
+)
 
-# Estilos CSS personalizados para imitar el diseño oscuro y redondeado de tu código original
+# 2. ESTILOS CSS PARA MODO CLARO (Alto Contraste)
 st.markdown("""
     <style>
-    /* Fondo general oscuro */
+    /* Fondo general de la aplicación (Blanco impoluto) */
     .stApp {
-        background-color: #262626;
+        background-color: #ffffff !important;
     }
-    /* Estilo para la pantalla de texto (Display) */
+    
+    /* Título principal en color gris oscuro/negro */
+    h1 {
+        color: #1a1a1a !important;
+        text-align: center;
+        font-weight: bold !important;
+    }
+
+    /* Pantalla de la calculadora (Display) blanca con borde marcado y números negros */
     .stTextInput input {
-        background-color: #333333 !important;
-        color: #ffffff !important;
-        font-size: 36px !important;
+        background-color: #f7f9fa !important;
+        color: #111111 !important; 
+        font-size: 42px !important;
+        font-family: monospace !important;
         text-align: right !important;
         border-radius: 12px !important;
-        border: none !important;
+        border: 2px solid #cccccc !important;
         padding: 20px !important;
+        box-shadow: inset 0px 2px 5px rgba(0,0,0,0.05);
     }
-    /* Estilo base para todos los botones */
+
+    /* Diseño base de los botones de la calculadora */
     div.stButton > button {
         width: 100%;
-        height: 60px;
-        font-size: 22px !important;
-        font-weight: bold;
-        border-radius: 12px !important;
-        border: none !important;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-        transition: all 0.1s ease;
+        height: 70px;
+        font-size: 26px !important;
+        font-weight: bold !important;
+        border-radius: 14px !important;
+        border: 1px solid #dddddd !important;
+        box-shadow: 0px 3px 6px rgba(0,0,0,0.05);
+        transition: background-color 0.2s, transform 0.1s;
     }
-    /* Botones de operaciones (Azul) */
+
+    div.stButton > button:active {
+        transform: scale(0.96);
+    }
+
+    /* BOTONES NUMÉRICOS: Gris claro sutil con NUMEROS NEGROS puros */
+    div.num-btn > div > button {
+        background-color: #eaeaea !important;
+        color: #000000 !important; /* NEGRO ABSOLUTO */
+    }
+    div.num-btn > div > button:hover {
+        background-color: #dfdfdf !important;
+        color: #000000 !important;
+    }
+
+    /* BOTONES DE OPERADORES: Azul rey nítido con texto blanco */
     div.op-btn > div > button {
-        background-color: #1a99cc !important;
+        background-color: #0066cc !important;
         color: #ffffff !important;
     }
     div.op-btn > div > button:hover {
-        background-color: #147da6 !important;
+        background-color: #0052a3 !important;
         color: #ffffff !important;
     }
-    /* Botones numéricos (Blanco/Gris claro) */
-    div.num-btn > div > button {
-        background-color: #f2f2f2 !important;
-        color: #1a1a1a !important;
+
+    /* BOTÓN DE BORRAR 'C': Naranja/Rojo vibrante con texto blanco */
+    div.clear-btn > div > button {
+        background-color: #e63946 !important;
+        color: #ffffff !important;
     }
-    div.num-btn > div > button:hover {
-        background-color: #d9d9d9 !important;
-        color: #1a1a1a !important;
+    div.clear-btn > div > button:hover {
+        background-color: #cc1f2d !important;
+        color: #ffffff !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Inicializar las variables de estado (para que Streamlit recuerde lo que escribes)
+# 3. MEMORIA INTERNA DE LA CALCULADORA
 if 'display' not in st.session_state:
     st.session_state.display = ""
-if 'last_was_equal' not in st.session_state:
-    st.session_state.last_was_equal = False
+if 'reiniciar' not in st.session_state:
+    st.session_state.reiniciar = False
 
-# Lista de operadores para la lógica
-operators = ['+', '-', '*', '/']
-
-# Función que maneja los clics de los botones
-def click_button(label):
-    if label == 'C':
+# Lógica de procesamiento de operaciones
+def presionar(boton):
+    if boton == 'C':
         st.session_state.display = ""
-        st.session_state.last_was_equal = False
-    elif label == '=':
+        st.session_state.reiniciar = False
+    elif boton == '=':
         try:
             if st.session_state.display:
-                # Evalúa la operación
-                result = eval(st.session_state.display)
-                # Formatea float si es necesario
-                if isinstance(result, float):
-                    st.session_state.display = f"{result:.2f}".rstrip('0').rstrip('.')
+                ecuacion = st.session_state.display.replace('x', '*')
+                resultado = eval(ecuacion)
+                
+                if isinstance(resultado, float):
+                    st.session_state.display = f"{resultado:.2f}".rstrip('0').rstrip('.')
                 else:
-                    st.session_state.display = str(result)
-                st.session_state.last_was_equal = True
-        except Exception:
+                    st.session_state.display = str(resultado)
+                st.session_state.reiniciar = True
+        except:
             st.session_state.display = "Error"
-            st.session_state.last_was_equal = False
+            st.session_state.reiniciar = True
     else:
-        if st.session_state.last_was_equal:
-            if label in operators:
-                st.session_state.display += label
-            else:
-                st.session_state.display = label
-            st.session_state.last_was_equal = False
+        if st.session_state.reiniciar and boton not in ['+', '-', 'x', '/']:
+            st.session_state.display = boton
         else:
-            st.session_state.display += label
+            st.session_state.display += boton
+        st.session_state.reiniciar = False
 
-# --- INTERFAZ DE USUARIO ---
-
+# 4. CONSTRUCCIÓN DE LA INTERFAZ
 st.title("🧮 Calculadora")
+st.write("")
 
-# Pantalla de la calculadora
-st.text_input(label="Resultado", value=st.session_state.display, key="screen", label_visibility="collapsed", disabled=True)
+# Render de la pantalla numérica
+st.text_input(label="screen", value=st.session_state.display, label_visibility="collapsed", disabled=True)
+st.write("")
 
-# Distribución de botones en Matriz (4 filas x 4 columnas)
+# Distribución de la botonera
 botones = [
     ['7', '8', '9', '/'],
-    ['4', '5', '6', '*'],
+    ['4', '5', '6', 'x'],
     ['1', '2', '3', '-'],
     ['C', '0', '=', '+']
 ]
 
-# Renderizar la grilla de botones aplicando los estilos correspondientes
+# Dibujar las filas y columnas aplicando el nuevo estilo claro
 for fila in botones:
     cols = st.columns(4)
-    for i, btn_text in enumerate(fila):
-        # Determinar si es operador o número para el estilo visual
-        is_op = btn_text in operators or btn_text in ['C', '=']
-        css_class = "op-btn" if is_op else "num-btn"
+    for i, texto in enumerate(fila):
+        if texto == 'C':
+            clase_css = "clear-btn"
+        elif texto in ['/', 'x', '-', '+', '=']:
+            clase_css = "op-btn"
+        else:
+            clase_css = "num-btn"
         
         with cols[i]:
-            # Envolvemos el botón en un contenedor div para que el CSS sepa cuál es cuál
-            st.markdown(f'<div class="{css_class}">', unsafe_allow_html=True)
-            if st.button(btn_text, key=f"btn_{btn_text}"):
-                click_button(btn_text)
-                st.rerun() # Recarga la app para refrescar la pantalla inmediatamente
+            st.markdown(f'<div class="{clase_css}">', unsafe_allow_html=True)
+            st.button(texto, key=f"btn_{texto}", on_click=presionar, args=(texto,))
             st.markdown('</div>', unsafe_allow_html=True)
-            
